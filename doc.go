@@ -54,8 +54,10 @@
 //
 // Every attempt and every wait observes the supplied context. When the context is canceled or its
 // deadline passes, the active call returns [context.Cause] for that context and abandons any
-// further attempts. On a clean context, the result of the final attempt — its value for
-// RetryWithData, plus its error — is returned.
+// further attempts. The result RetryWithData returns in that case is whatever the most recent
+// attempt produced — the zero value of the result type if no attempt ran — so it must not be
+// treated as successful; check the error first. On a clean context, the result of the final
+// attempt — its value for RetryWithData, plus its error — is returned.
 //
 // # Concurrency
 //

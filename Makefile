@@ -77,7 +77,7 @@ install-lefthook:
 		$(call log_warning,Skipped Installing lefthook: already installed!); \
 	else \
 		[ -d "$(LEFTHOOK_BIN_DIR)" ] || mkdir -p $(LEFTHOOK_BIN_DIR); \
-		curl -sSL "https://github.com/evilmartians/lefthook/releases/download/v$(LEFTHOOK_BIN_VER)/lefthook_$(LEFTHOOK_BIN_VER)_$$(uname -s)_$$(uname -m)" -o "$(LEFTHOOK_BIN)" && \
+		curl -sSL "https://github.com/evilmartians/lefthook/releases/download/v$(LEFTHOOK_BIN_VER)/lefthook_$(LEFTHOOK_BIN_VER)_$$(uname -s)_$$(uname -m | sed 's/arm64/aarch64/')" -o "$(LEFTHOOK_BIN)" && \
 		chmod +x "$(LEFTHOOK_BIN)"; \
 	fi
 	@$(call log_success,Installing lefthook...done!)

@@ -116,6 +116,21 @@ func TestDecorrelatedJitter(t *testing.T) {
 		assert.Equal(t, time.Duration(0), Decorrelated(0, 0, 5*time.Second))
 	})
 
+	t.Run("zero minDelay degenerates", func(t *testing.T) {
+		t.Parallel()
+
+		maxDelay := 10 * time.Second
+
+		assert.Equal(t, time.Duration(0), Decorrelated(0, maxDelay, 0), "Expected the first call with a non-positive previous to return 0")
+
+		for range 100 {
+			jittered := Decorrelated(0, maxDelay, 5*time.Second)
+
+			assert.GreaterOrEqual(t, jittered, 0*time.Second, "Jittered duration should be at least 0")
+			assert.LessOrEqual(t, jittered, maxDelay, "Jittered duration should not exceed the maximum")
+		}
+	})
+
 	t.Run("min equals max", func(t *testing.T) {
 		t.Parallel()
 

@@ -52,10 +52,6 @@ func zeroBackoff() (backoff Backoff) {
 // Returns:
 //   - base (time.Duration): The exponential base delay, capped at maxDelay.
 func exponential(minDelay, maxDelay time.Duration, attempt int) (base time.Duration) {
-	if attempt < 0 {
-		return min(minDelay, maxDelay)
-	}
-
 	// A shift of 63 or more bits overflows every positive int64; below that, a minDelay above
 	// math.MaxInt64>>attempt would overflow when shifted. Both clamp to maxDelay, as does any
 	// product that grows past maxDelay itself.

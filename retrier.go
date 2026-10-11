@@ -293,15 +293,15 @@ func WithOnRetry(onRetry OnRetry) (f OptionFunc) {
 //
 // Parameters:
 //   - ctx (context.Context): The context controlling the retry lifecycle. Cancellation or timeout
-//     aborts retries and returns ctx.Err().
+//     aborts retries and returns context.Cause(ctx).
 //   - operation (Operation): The operation to retry, which returns an error indicating success
 //     or failure.
 //   - ofs (...OptionFunc): Variadic functional options to customize retry behavior, such as
 //     maximum attempts, delay bounds, backoff strategy, retry predicate, and OnRetry callback.
 //
 // Returns:
-//   - err (error): The error from the last attempt if all attempts fail, or ctx.Err() if the
-//     context is canceled or times out. Returns nil if the operation succeeds.
+//   - err (error): The error from the last attempt if all attempts fail, or context.Cause(ctx) if
+//     the context is canceled or times out. Returns nil if the operation succeeds.
 func Retry(ctx context.Context, operation Operation, ofs ...OptionFunc) (err error) {
 	_, err = RetryWithData(ctx, operation.withEmptyData(), ofs...)
 
@@ -314,8 +314,9 @@ func Retry(ctx context.Context, operation Operation, ofs ...OptionFunc) (err err
 // compute delays between attempts. If the operation succeeds (returns nil error), it returns
 // the operation's result and nil. If the operation fails with an error the WithRetryOn predicate
 // rejects, it stops and returns that error. If the context is canceled or times out, it returns
-// the context's error. If all attempts fail, it returns the last result and error from the
-// operation.
+// the context's error; the result returned alongside it is whatever the most recent attempt
+// produced (the zero value of T if none ran) and must not be treated as successful. If all
+// attempts fail, it returns the last result and error from the operation.
 //
 // After the options are applied, invalid values are normalized: a nil backoff constructor falls
 // back to exponential backoff with decorrelated jitter, a non-positive attempt limit or wait
@@ -332,15 +333,18 @@ func Retry(ctx context.Context, operation Operation, ofs ...OptionFunc) (err err
 //
 // Parameters:
 //   - ctx (context.Context): The context controlling the retry lifecycle. Cancellation or timeout
-//     aborts retries and returns ctx.Err().
+//     aborts retries and returns context.Cause(ctx).
 //   - operation (OperationWithData[T]): The operation to retry, returning a result of type T
 //     and an error.
 //   - ofs (...OptionFunc): Variadic functional options to customize retry behavior.
 //
 // Returns:
-//   - result (T): The result from the operation if it succeeds, or the last result if all attempts fail.
-//   - err (error): The error from the last attempt if all attempts fail, or ctx.Err() if the
-//     context is canceled or times out. Returns nil if the operation succeeds.
+//   - result (T): The result from the operation if it succeeds, or the result of the last
+//     attempt if all attempts fail. If the context is canceled, it is the value the most recent
+//     attempt produced — possibly partial or stale — or the zero value of T if no attempt ran;
+//     treat it as successful only when err is nil.
+//   - err (error): The error from the last attempt if all attempts fail, or context.Cause(ctx)
+//     if the context is canceled or times out. Returns nil if the operation succeeds.
 func RetryWithData[T any](ctx context.Context, operation OperationWithData[T], ofs ...OptionFunc) (result T, err error) {
 	opts := &options{
 		maxAttempts: DefaultMaxAttempts,
@@ -382,22 +386,20 @@ func RetryWithData[T any](ctx context.Context, operation OperationWithData[T], o
 
 	for attempt := 1; ; attempt++ {
 		if ctx.Err() != nil {
-			err = context.Cause(ctx)
-
-			return
+			return result, context.Cause(ctx)
 		}
 
 		result, err = operation()
 		if err == nil {
-			return
+			return result, nil
 		}
 
 		if opts.retryOn != nil && !opts.retryOn(err) {
-			return
+			return result, err
 		}
 
 		if attempt >= opts.maxAttempts {
-			return
+			return result, err
 		}
 
 		delay := b(attempt)
@@ -424,9 +426,7 @@ func RetryWithData[T any](ctx context.Context, operation OperationWithData[T], o
 		case <-ctx.Done():
 			timer.Stop()
 
-			err = context.Cause(ctx)
-
-			return
+			return result, context.Cause(ctx)
 		}
 	}
 }
