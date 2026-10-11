@@ -353,27 +353,23 @@ func TestRetry_OnRetrySkipsFinalAttempt(t *testing.T) {
 func TestRetry_OnRetrySilentWithoutUpcomingRetry(t *testing.T) {
 	t.Parallel()
 
-	t.Run("rejected by predicate", func(t *testing.T) {
-		t.Parallel()
+	notified := 0
 
-		notified := 0
+	op := &flakyOperation{failures: 1000}
 
-		op := &flakyOperation{failures: 1000}
+	err := hqgoretrier.Retry(
+		t.Context(),
+		op.run,
+		hqgoretrier.WithMaxAttempts(5),
+		hqgoretrier.WithBackoff(noWaitBackoff),
+		hqgoretrier.WithRetryOn(func(error) bool { return false }),
+		hqgoretrier.WithOnRetry(func(hqgoretrier.RetryEvent) {
+			notified++
+		}),
+	)
 
-		err := hqgoretrier.Retry(
-			t.Context(),
-			op.run,
-			hqgoretrier.WithMaxAttempts(5),
-			hqgoretrier.WithBackoff(noWaitBackoff),
-			hqgoretrier.WithRetryOn(func(error) bool { return false }),
-			hqgoretrier.WithOnRetry(func(hqgoretrier.RetryEvent) {
-				notified++
-			}),
-		)
-
-		require.ErrorIs(t, err, errTestOperation, "Expected the rejected error")
-		assert.Zero(t, notified, "Expected no notification when no retry follows a rejected error")
-	})
+	require.ErrorIs(t, err, errTestOperation, "Expected the rejected error")
+	assert.Zero(t, notified, "Expected no notification when no retry follows a rejected error")
 }
 
 func TestRetry_OnRetryPanicPropagates(t *testing.T) {
@@ -861,6 +857,47 @@ func TestRetryWithData_ContextCanceledDuringWait(t *testing.T) {
 
 	require.ErrorIs(t, err, cause, "Expected the cancellation cause from the wait branch")
 	assert.Zero(t, result, "Expected the zero value when canceled during the wait")
+}
+
+func TestRetryWithData_ContextCanceledDuringWaitReturnsStaleResult(t *testing.T) {
+	t.Parallel()
+
+	cause := errors.New("canceled during wait")
+
+	ctx, cancel := context.WithCancelCause(t.Context())
+	defer cancel(nil)
+
+	waiting := make(chan struct{})
+
+	var once sync.Once
+
+	longBackoff := func(_, _ time.Duration) hqgoretrierbackoff.Backoff {
+		return func(int) time.Duration {
+			once.Do(func() { close(waiting) })
+
+			return time.Hour
+		}
+	}
+
+	op := func() (int, error) {
+		return 7, errTestOperation
+	}
+
+	go func() {
+		<-waiting
+
+		cancel(cause)
+	}()
+
+	result, err := hqgoretrier.RetryWithData(
+		ctx,
+		op,
+		hqgoretrier.WithMaxAttempts(10),
+		hqgoretrier.WithBackoff(longBackoff),
+	)
+
+	require.ErrorIs(t, err, cause, "Expected the cancellation cause from the wait branch")
+	assert.Equal(t, 7, result, "Expected the stale result from the most recent attempt when canceled during the wait")
 }
 
 var (

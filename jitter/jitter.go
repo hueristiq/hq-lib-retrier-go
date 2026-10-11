@@ -70,7 +70,11 @@ func Full(backoff time.Duration) (jitter time.Duration) {
 //
 // Returns:
 //   - jitter (time.Duration): The calculated jitter duration, in [minDelay, maxDelay).
-//     Returns 0 if minDelay or maxDelay is negative, or if minDelay exceeds maxDelay.
+//     Returns 0 if minDelay or maxDelay is negative, or if minDelay exceeds maxDelay. Two
+//     degenerate cases are worth noting: when minDelay equals maxDelay, every call returns
+//     exactly maxDelay — a fixed delay, not a range; and when minDelay is 0, the range has no
+//     floor — a non-positive previous yields 0, and once a positive previous exists the draw
+//     is in [0, min(maxDelay, previous*3)) and can come arbitrarily close to zero.
 func Decorrelated(minDelay, maxDelay, previous time.Duration) (jitter time.Duration) {
 	if minDelay < 0 || maxDelay < 0 || minDelay > maxDelay {
 		return 0
