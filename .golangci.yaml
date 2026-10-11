@@ -158,4 +158,3 @@ run:
     modules-download-mode: readonly
     allow-parallel-runners: true
     allow-serial-runners: true
-    go: '1.26.3'
