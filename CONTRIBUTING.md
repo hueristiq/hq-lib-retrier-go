@@ -56,7 +56,7 @@ Pull requests should target the `dev` branch. Please also reference the issue fr
 
 This package follows the shared code-style conventions of the hueristiq Go libraries:
 
-- **Documentation.** Every exported symbol carries a doc comment that begins with the symbol name. Functions document their parameters and results under `Parameters:` and `Returns:` headings as `  - name (type): description` lists, and use named return parameters.
+- **Documentation.** Every exported symbol carries a doc comment that begins with the symbol name. Functions document generics under `Type Parameters:`, then `Parameters:`, then `Returns:`, using one `  - name (type): description` bullet per parameter and result (the receiver is not a parameter) and named return parameters. Empty sections use a blank comment line followed by `none.`, never an inline heading or a bullet.
 - **Errors.** Error strings are lowercase, carry no trailing punctuation, and are prefixed with the producing function (for example `package.Func: message`). Sentinel errors live in package-level vars; underlying errors are wrapped with `%w`.
 - **Configuration.** Functional options named `WithX` over an unexported options struct are the default; a config struct or fluent builder is used where it fits the domain better.
 - **Interfaces.** A type that implements an interface declares a compile-time assertion (`var _ Iface = (*T)(nil)`).

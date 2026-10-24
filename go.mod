@@ -1,6 +1,6 @@
 module github.com/hueristiq/hq-lib-retrier-go
 
-go 1.24
+go 1.26.3
 
 require github.com/stretchr/testify v1.12.1
 
