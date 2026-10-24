@@ -38,7 +38,7 @@ define log_success
 	echo "$(COLOR_GREEN)$(ICON_SUCCESS) $(1)$(COLOR_RESET)"
 endef
 
-BIN_DIR = $(PWD)/.bin
+BIN_DIR = $(CURDIR)/.bin
 
 GOLANGCI_LINT_BIN_VER = 2.12.0
 GOLANGCI_LINT_BIN_DIR = $(BIN_DIR)/golangci-lint/$(GOLANGCI_LINT_BIN_VER)

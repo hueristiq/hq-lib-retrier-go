@@ -26,6 +26,10 @@ func validBounds(minDelay, maxDelay time.Duration) (valid bool) {
 // called with invalid bounds, preserving the package contract that invalid input produces a
 // zero duration.
 //
+// Parameters:
+//
+//	none.
+//
 // Returns:
 //   - backoff (Backoff): A function that returns a zero duration for every attempt.
 func zeroBackoff() (backoff Backoff) {

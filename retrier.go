@@ -67,6 +67,10 @@ type RetryEvent struct {
 //
 // Parameters:
 //   - event (RetryEvent): The data of the failed attempt and the wait that follows it.
+//
+// Returns:
+//
+//	none.
 type OnRetry func(event RetryEvent)
 
 // OptionFunc is a function type used to modify the retry options in a declarative manner.
@@ -78,6 +82,10 @@ type OnRetry func(event RetryEvent)
 //
 // Parameters:
 //   - opts (*options): A pointer to the options struct to be modified.
+//
+// Returns:
+//
+//	none.
 type OptionFunc func(opts *options)
 
 // Operation is a function type representing an operation that may be retried.
@@ -90,6 +98,10 @@ type OptionFunc func(opts *options)
 // again after a failure. A panicking operation is not recovered — the panic propagates to the
 // caller of Retry.
 //
+// Parameters:
+//
+//	none.
+//
 // Returns:
 //   - err (error): The error from the operation, or nil if the operation succeeded.
 type Operation func() (err error)
@@ -99,6 +111,10 @@ type Operation func() (err error)
 //
 // This method enables operations that do not produce a result to be used with RetryWithData,
 // allowing a consistent interface for both result-producing and non-result-producing operations.
+//
+// Parameters:
+//
+//	none.
 //
 // Returns:
 //   - operationWithData (OperationWithData[struct{}]): A function that executes the original
@@ -124,6 +140,10 @@ func (o Operation) withEmptyData() (operationWithData OperationWithData[struct{}
 //
 // Type Parameters:
 //   - T: The type of the data returned by the operation.
+//
+// Parameters:
+//
+//	none.
 //
 // Returns:
 //   - data (T): The result of the operation if successful.
