@@ -28,7 +28,7 @@
 //   - [WithRetryOn] decides per error whether another attempt is worthwhile.
 //   - [WithOnRetry] registers the callback invoked after every failed attempt that will be retried.
 //
-// Unset options fall back to defaults: [DefaultMaxAttempts] attempts, a minimum wait of
+// Unset options fall back to defaults: [DefaultMaxAttempts] attempts, a base wait of
 // [DefaultWaitMin] and a maximum wait of [DefaultWaitMax], and exponential backoff with
 // decorrelated jitter. Invalid values are normalized the same way — a nil backoff constructor,
 // a non-positive attempt limit, or non-positive wait bounds fall back to the defaults, and a
@@ -53,7 +53,8 @@
 // # Context
 //
 // Every attempt and every wait observes the supplied context. When the context is canceled or its
-// deadline passes, the active call returns [context.Cause] for that context and abandons any
+// deadline passes, the active call returns [context.Cause] for that context
+// wrapped with the entry point's name and abandons any
 // further attempts. The result RetryWithData returns in that case is whatever the most recent
 // attempt produced — the zero value of the result type if no attempt ran — so it must not be
 // treated as successful; check the error first. On a clean context, the result of the final

@@ -12,11 +12,11 @@ import (
 // positive and ordered.
 //
 // Parameters:
-//   - minDelay (time.Duration): The base (minimum) delay duration.
-//   - maxDelay (time.Duration): The maximum allowable delay duration.
+//   - minDelay (time.Duration): the base (minimum) delay duration.
+//   - maxDelay (time.Duration): the maximum allowable delay duration.
 //
 // Returns:
-//   - valid (bool): True when minDelay and maxDelay are positive and minDelay does not exceed
+//   - valid (bool): true when minDelay and maxDelay are positive and minDelay does not exceed
 //     maxDelay.
 func validBounds(minDelay, maxDelay time.Duration) (valid bool) {
 	return minDelay > 0 && maxDelay > 0 && minDelay <= maxDelay
@@ -26,12 +26,8 @@ func validBounds(minDelay, maxDelay time.Duration) (valid bool) {
 // called with invalid bounds, preserving the package contract that invalid input produces a
 // zero duration.
 //
-// Parameters:
-//
-//	none.
-//
 // Returns:
-//   - backoff (Backoff): A function that returns a zero duration for every attempt.
+//   - backoff (Backoff): a function that returns a zero duration for every attempt.
 func zeroBackoff() (backoff Backoff) {
 	return func(int) time.Duration {
 		return 0
@@ -49,12 +45,12 @@ func zeroBackoff() (backoff Backoff) {
 // constructors in this package enforce this before calling it.
 //
 // Parameters:
-//   - minDelay (time.Duration): The base (minimum) delay duration.
-//   - maxDelay (time.Duration): The maximum allowable delay duration.
-//   - attempt (int): The current retry attempt number (typically starting at 1).
+//   - minDelay (time.Duration): the base (minimum) delay duration.
+//   - maxDelay (time.Duration): the maximum allowable delay duration.
+//   - attempt (int): the current retry attempt number (typically starting at 1).
 //
 // Returns:
-//   - base (time.Duration): The exponential base delay, capped at maxDelay.
+//   - base (time.Duration): the exponential base delay, capped at maxDelay.
 func exponential(minDelay, maxDelay time.Duration, attempt int) (base time.Duration) {
 	// A shift of 63 or more bits overflows every positive int64; below that, a minDelay above
 	// math.MaxInt64>>attempt would overflow when shifted. Both clamp to maxDelay, as does any
@@ -78,11 +74,11 @@ func exponential(minDelay, maxDelay time.Duration, attempt int) (base time.Durat
 // duration. A negative attempt also yields zero.
 //
 // Parameters:
-//   - minDelay (time.Duration): The base (minimum) delay duration.
-//   - maxDelay (time.Duration): The maximum allowable delay duration.
+//   - minDelay (time.Duration): the base (minimum) delay duration.
+//   - maxDelay (time.Duration): the maximum allowable delay duration.
 //
 // Returns:
-//   - backoff (Backoff): A function that computes the exponential backoff delay for a given attempt,
+//   - backoff (Backoff): a function that computes the exponential backoff delay for a given attempt,
 //     capped at maxDelay.
 func Exponential(minDelay, maxDelay time.Duration) (backoff Backoff) {
 	if !validBounds(minDelay, maxDelay) {
@@ -110,11 +106,11 @@ func Exponential(minDelay, maxDelay time.Duration) (backoff Backoff) {
 // Backoff always yields a zero duration. A negative attempt also yields zero.
 //
 // Parameters:
-//   - minDelay (time.Duration): The base (minimum) delay duration.
-//   - maxDelay (time.Duration): The maximum allowable delay duration.
+//   - minDelay (time.Duration): the base (minimum) delay duration.
+//   - maxDelay (time.Duration): the maximum allowable delay duration.
 //
 // Returns:
-//   - backoff (Backoff): A function that computes the exponential backoff delay with equal jitter for a
+//   - backoff (Backoff): a function that computes the exponential backoff delay with equal jitter for a
 //     given attempt, never exceeding maxDelay.
 func ExponentialWithEqualJitter(minDelay, maxDelay time.Duration) (backoff Backoff) {
 	if !validBounds(minDelay, maxDelay) {
@@ -143,11 +139,11 @@ func ExponentialWithEqualJitter(minDelay, maxDelay time.Duration) (backoff Backo
 // Backoff always yields a zero duration. A negative attempt also yields zero.
 //
 // Parameters:
-//   - minDelay (time.Duration): The base (minimum) delay duration.
-//   - maxDelay (time.Duration): The maximum allowable delay duration.
+//   - minDelay (time.Duration): the base (minimum) delay duration.
+//   - maxDelay (time.Duration): the maximum allowable delay duration.
 //
 // Returns:
-//   - backoff (Backoff): A function that computes the exponential backoff delay with full jitter for a
+//   - backoff (Backoff): a function that computes the exponential backoff delay with full jitter for a
 //     given attempt, never exceeding maxDelay.
 func ExponentialWithFullJitter(minDelay, maxDelay time.Duration) (backoff Backoff) {
 	if !validBounds(minDelay, maxDelay) {
@@ -166,7 +162,7 @@ func ExponentialWithFullJitter(minDelay, maxDelay time.Duration) (backoff Backof
 // ExponentialWithDecorrelatedJitter returns a Backoff function that implements exponential backoff
 // with decorrelated jitter, reducing correlation between successive retry delays.
 //
-// Each delay is drawn from the range [minDelay, min(maxDelay, previous * 3)], where previous is
+// Each delay is drawn from the range [minDelay, min(maxDelay, previous * 3)), where previous is
 // the delay produced by the preceding call — not a fixed function of the attempt number:
 //
 //	delay = jitter.Decorrelated(minDelay, maxDelay, previousDelay)
@@ -185,11 +181,11 @@ func ExponentialWithFullJitter(minDelay, maxDelay time.Duration) (backoff Backof
 // Backoff always yields a zero duration. A negative attempt also yields zero.
 //
 // Parameters:
-//   - minDelay (time.Duration): The base (minimum) delay duration.
-//   - maxDelay (time.Duration): The maximum allowable delay duration.
+//   - minDelay (time.Duration): the base (minimum) delay duration.
+//   - maxDelay (time.Duration): the maximum allowable delay duration.
 //
 // Returns:
-//   - backoff (Backoff): A function that computes the exponential backoff delay with decorrelated jitter
+//   - backoff (Backoff): a function that computes the exponential backoff delay with decorrelated jitter
 //     for a given attempt, never exceeding maxDelay.
 func ExponentialWithDecorrelatedJitter(minDelay, maxDelay time.Duration) (backoff Backoff) {
 	if !validBounds(minDelay, maxDelay) {
