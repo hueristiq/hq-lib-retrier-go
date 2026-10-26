@@ -20,15 +20,17 @@
 
 - **Configurable Retry Policy:** Max attempts, min/max delays, and backoff strategy.
 - **Result-Carrying Operations:** `RetryWithData` retries operations that return a value.
-- **Context Support:** Cancellation and deadlines are observed during attempts and waits.
+- **Context Support:** Cancellation and deadlines are checked before and between attempts and during waits.
 
 ## Installation
 
 To install `hq-lib-retrier-go`, run the following command in your Go project:
 
 ```bash
-go get -v -u github.com/hueristiq/hq-lib-retrier-go
+go get github.com/hueristiq/hq-lib-retrier-go@latest
 ```
+
+Requires Go 1.26.3 or later.
 
 ## Usage
 
@@ -37,6 +39,8 @@ The examples below import the package under the `hqgoretrier` alias.
 ```go
 import hqgoretrier "github.com/hueristiq/hq-lib-retrier-go"
 ```
+
+The snippets below are illustrative.
 
 ### Retry
 
@@ -154,14 +158,14 @@ err := hqgoretrier.Retry(ctx, operation,
 
 ## Configuration
 
-Behavior is set through functional options passed to `Retry` or `RetryWithData`. Any option left unset falls back to its default.
+Behavior is set through functional options passed to `Retry` or `RetryWithData`. Any option left unset falls back to its default. The `With*` helpers cover the common cases; because the option receives the exported `Options` type, callers can also write custom `OptionFunc`s.
 
 | Option | Description | Default |
 | --- | --- | --- |
 | `WithMaxAttempts(n)` | Maximum number of attempts, **including the initial call** (so `3` means the first call plus up to two retries). A value `<= 0` falls back to the default; pass `math.MaxInt` for effectively unbounded retries bounded only by the context. | `DefaultMaxAttempts` (`3`) |
-| `WithWaitMin(d)` | Lower bound for the delay between attempts. A value `<= 0` falls back to the default. | `DefaultWaitMin` (`1s`) |
+| `WithWaitMin(d)` | Base delay for the built-in exponential strategies (the first retry waits `2×` this value). A value `<= 0` falls back to the default. | `DefaultWaitMin` (`1s`) |
 | `WithWaitMax(d)` | Upper bound for the delay between attempts. A value `<= 0` falls back to the default; a value below the minimum is raised to the minimum. | `DefaultWaitMax` (`30s`) |
-| `WithBackoff(fn)` | Constructor for the strategy that computes each delay (see below). It is called once per retry loop with the normalized bounds, so stateful strategies always get fresh state. Passing `nil` selects the default. | `backoff.ExponentialWithDecorrelatedJitter` |
+| `WithBackoff(fn)` | Constructor for the strategy that computes each delay (see below). It is called once per retry loop with the normalized bounds, so stateful strategies always get fresh state. Passing `nil` selects the default; a constructor that returns `nil` panics. | `backoff.ExponentialWithDecorrelatedJitter` |
 | `WithRetryOn(fn)` | Predicate deciding whether a failed attempt's error is retryable; returning `false` stops retrying and returns that error. | retry all errors |
 | `WithOnRetry(fn)` | Callback invoked after each failed attempt that will be retried, receiving a RetryEvent with the attempt number, the error, and the next delay. | none |
 

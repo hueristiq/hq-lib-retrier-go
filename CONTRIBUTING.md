@@ -56,11 +56,13 @@ Pull requests should target the `dev` branch. Please also reference the issue fr
 
 This package follows the shared code-style conventions of the hueristiq Go libraries:
 
-- **Documentation.** Every exported symbol carries a doc comment that begins with the symbol name. Functions document generics under `Type Parameters:`, then `Parameters:`, then `Returns:`, using one `  - name (type): description` bullet per parameter and result (the receiver is not a parameter) and named return parameters. Empty sections use a blank comment line followed by `none.`, never an inline heading or a bullet.
-- **Errors.** Error strings are lowercase, carry no trailing punctuation, and are prefixed with the producing function (for example `package.Func: message`). Sentinel errors live in package-level vars; underlying errors are wrapped with `%w`.
-- **Configuration.** Functional options named `WithX` over an unexported options struct are the default; a config struct or fluent builder is used where it fits the domain better.
+- **Documentation.** Every exported symbol carries a doc comment that begins with the symbol name. Package docs use sentence-case headings and include `# Entry points`, `# Configuration`, and `# Concurrency` sections. Functions document generics under `Type Parameters:`, then `Parameters:`, then `Returns:`, using one `  - name (type): description` bullet per parameter and result (the receiver is not a parameter) and named return parameters. Descriptions are lowercase and boolean results use `true`/`false`. Document every parameter and result: include a `Parameters:` block when the function or method takes arguments and a `Returns:` block when it returns values. Omit a block when the list is empty rather than writing a `none.` placeholder. Document struct fields under a `Fields:` block and interface methods under a `Methods:` block, one `  - Name (type): description` bullet per entry, with lowercase descriptions ending in a period. Do not repeat the entries as inline field comments.
+- **Errors.** Error strings are lowercase, carry no trailing punctuation, and are prefixed with the producing function (for example `package.Func: message`). Sentinel errors live in package-level vars with plain messages; underlying errors are wrapped with `%w`. Context causes are wrapped with the entry point's name.
+- **Configuration.** Functional options use an exported parameter type (`Options` or a domain type), ignore nil, and let callers write custom `OptionFunc`s; the `With*` helpers cover common settings.
 - **Interfaces.** A type that implements an interface declares a compile-time assertion (`var _ Iface = (*T)(nil)`).
 - **Naming.** MixedCaps with uniform-case initialisms (`URL`, `ID`, `TLS`); accessors are not prefixed with `Get`.
+- **Tests.** API tests live in `_test` packages; tests that need unexported behavior live in the package. Use `t.Parallel` where safe and run `go test -race ./...`.
+- **Examples.** Add runnable `Example` functions with deterministic `// Output` blocks for new public behavior.
 - **Formatting.** Code is `gofmt`/`goimports` clean, with imports grouped standard library / external / `github.com/hueristiq`. Style is enforced mechanically by the repo-pinned `golangci-lint` configuration — run `make go-lint` before submitting.
 
 ## Git Hooks

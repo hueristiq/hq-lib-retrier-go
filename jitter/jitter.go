@@ -16,10 +16,10 @@ import (
 //	jitter = (backoff / 2) + random(0, backoff / 2)
 //
 // Parameters:
-//   - backoff (time.Duration): The base backoff duration to which jitter is applied.
+//   - backoff (time.Duration): the base backoff duration to which jitter is applied.
 //
 // Returns:
-//   - jitter (time.Duration): The calculated jitter duration, in [backoff/2, backoff) for
+//   - jitter (time.Duration): the calculated jitter duration, in [backoff/2, backoff) for
 //     positive backoff. Returns 0 if backoff is 0 or negative.
 func Equal(backoff time.Duration) (jitter time.Duration) {
 	if backoff <= 0 {
@@ -39,10 +39,10 @@ func Equal(backoff time.Duration) (jitter time.Duration) {
 //	jitter = random(0, backoff)
 //
 // Parameters:
-//   - backoff (time.Duration): The base backoff duration to which jitter is applied.
+//   - backoff (time.Duration): the base backoff duration to which jitter is applied.
 //
 // Returns:
-//   - jitter (time.Duration): The calculated jitter duration, in [0, backoff) for positive backoff.
+//   - jitter (time.Duration): the calculated jitter duration, in [0, backoff) for positive backoff.
 //     Returns 0 if backoff is 0 or negative.
 func Full(backoff time.Duration) (jitter time.Duration) {
 	if backoff <= 0 {
@@ -63,13 +63,13 @@ func Full(backoff time.Duration) (jitter time.Duration) {
 //   - A random duration in [minDelay, upper) is returned, capped at maxDelay.
 //
 // Parameters:
-//   - minDelay (time.Duration): The minimum allowable jitter duration.
-//   - maxDelay (time.Duration): The maximum allowable jitter duration.
-//   - previous (time.Duration): The previous backoff duration, influencing the jitter range.
+//   - minDelay (time.Duration): the minimum allowable jitter duration.
+//   - maxDelay (time.Duration): the maximum allowable jitter duration.
+//   - previous (time.Duration): the previous backoff duration, influencing the jitter range.
 //     If non-positive, defaults to minDelay.
 //
 // Returns:
-//   - jitter (time.Duration): The calculated jitter duration, in [minDelay, maxDelay).
+//   - jitter (time.Duration): the calculated jitter duration, in [minDelay, maxDelay).
 //     Returns 0 if minDelay or maxDelay is negative, or if minDelay exceeds maxDelay. Two
 //     degenerate cases are worth noting: when minDelay equals maxDelay, every call returns
 //     exactly maxDelay — a fixed delay, not a range; and when minDelay is 0, the range has no
@@ -101,11 +101,11 @@ func Decorrelated(minDelay, maxDelay, previous time.Duration) (jitter time.Durat
 // Performance: 0 allocs/op (see BenchmarkEqual, BenchmarkFull, and BenchmarkDecorrelated).
 //
 // Parameters:
-//   - maxDuration (time.Duration): The exclusive upper bound for the random duration.
+//   - maxDuration (time.Duration): the exclusive upper bound for the random duration.
 //     If 0 or negative, returns 0, as no meaningful random duration can be generated.
 //
 // Returns:
-//   - duration (time.Duration): A random duration in the range [0, maxDuration).
+//   - duration (time.Duration): a random duration in the range [0, maxDuration).
 //     Returns 0 if maxDuration <= 0.
 func getRandomDuration(maxDuration time.Duration) (duration time.Duration) {
 	if maxDuration <= 0 {

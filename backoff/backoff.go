@@ -19,12 +19,12 @@ import (
 // value may be shared across independent retry loops.
 //
 // Parameters:
-//   - attempt (int): The current retry attempt number, starting at 1. When driven by the
+//   - attempt (int): the current retry attempt number, starting at 1. When driven by the
 //     retrier, it is the number of the attempt that just failed. Implementations use this value
 //     to adjust the delay (e.g., increasing it for subsequent retries in exponential backoff).
 //
 // Returns:
-//   - delay (time.Duration): The calculated delay duration to wait before the next retry attempt,
+//   - delay (time.Duration): the calculated delay duration to wait before the next retry attempt,
 //     computed based on the implemented strategy (e.g., constant, linear, or exponential). For a
 //     valid attempt the delay lies in [0, the configured maximum]; jittered strategies may
 //     legitimately return less than the configured minimum. A negative attempt yields a zero

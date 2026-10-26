@@ -38,7 +38,7 @@ linters:
         # - goconst
         - gocritic
         # - gocyclo
-        # - godot
+        - godot
         - godox
         - goheader
         - gomoddirectives
@@ -82,7 +82,7 @@ linters:
         - protogetter
         - reassign
         # - recvcheck
-        # - revive
+        - revive
         - rowserrcheck
         - sloglint
         - spancheck
