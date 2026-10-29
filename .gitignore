@@ -3,3 +3,6 @@
 
 # IDE stuff
 .vscode
+
+# Local documentation
+docs/

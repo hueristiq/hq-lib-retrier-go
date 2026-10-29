@@ -46,7 +46,8 @@
 //
 // The delay between attempts comes from a [github.com/hueristiq/hq-lib-retrier-go/backoff.Backoff]
 // function, called with the 1-based number of the attempt that just failed. The backoff package
-// provides exponential strategies, optionally combined with the jitter strategies in
+// provides fixed ([github.com/hueristiq/hq-lib-retrier-go/backoff.Constant]) and exponential
+// strategies, optionally combined with the jitter strategies in
 // [github.com/hueristiq/hq-lib-retrier-go/jitter] to spread retries across clients and avoid the
 // thundering-herd problem.
 //

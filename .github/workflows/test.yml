@@ -35,20 +35,37 @@ jobs:
         runs-on: ${{ matrix.os }}
         steps:
             -
-                name: Set up Go
-                uses: actions/setup-go@v7
-                with:
-                    go-version:  '>=1.26'
-            -
                 name: Code Checkout
                 uses: actions/checkout@v7
                 with:
                     fetch-depth: 0
             -
+                name: Set up Go
+                uses: actions/setup-go@v7
+                with:
+                    go-version-file: go.mod
+            -
                 name: Go Module Management
                 run: make go-mod-tidy
+                working-directory: .
+            -
+                name: Verify go.mod tidy
+                run: git diff --exit-code go.mod go.sum
                 working-directory: .
             -
                 name: Go test
                 run: go test -v -race ./...
                 working-directory: .
+    govulncheck:
+        name: Vulnerability Scan
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: Code Checkout
+                uses: actions/checkout@v7
+            -
+                name: Run govulncheck
+                uses: golang/govulncheck-action@v1
+                with:
+                    repo-checkout: false
+                    go-package: ./...

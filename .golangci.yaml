@@ -112,6 +112,14 @@ linters:
         goconst:
             min-len: 2
             min-occurrences: 3
+        importas:
+            alias:
+                - pkg: github.com/hueristiq/hq-lib-retrier-go
+                  alias: hqgoretrier
+                - pkg: github.com/hueristiq/hq-lib-retrier-go/backoff
+                  alias: hqgoretrierbackoff
+                - pkg: github.com/hueristiq/hq-lib-retrier-go/jitter
+                  alias: hqgoretrierjitter
         gocritic:
             enabled-tags:
                 - performance
