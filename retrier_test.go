@@ -3,6 +3,7 @@ package retrier_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -48,7 +49,7 @@ func TestRetry_ImmediateSuccess(t *testing.T) {
 	op := &flakyOperation{failures: 0}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -64,7 +65,7 @@ func TestRetry_SuccessAfterFailures(t *testing.T) {
 	op := &flakyOperation{failures: 2}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -94,7 +95,7 @@ func TestRetry_AcrossBackoffStrategies(t *testing.T) {
 			op := &flakyOperation{failures: 2}
 
 			err := hqgoretrier.Retry(
-				t.Context(),
+				context.Background(),
 				op.run,
 				hqgoretrier.WithMaxAttempts(5),
 				hqgoretrier.WithWaitMin(time.Millisecond),
@@ -129,7 +130,7 @@ func TestRetry_MaxAttempts(t *testing.T) {
 			op := &flakyOperation{failures: 1000}
 
 			err := hqgoretrier.Retry(
-				t.Context(),
+				context.Background(),
 				op.run,
 				hqgoretrier.WithMaxAttempts(tt.maxAttempts),
 				hqgoretrier.WithBackoff(noWaitBackoff),
@@ -159,7 +160,7 @@ func TestRetry_MaxAttemptsFallsBackToDefault(t *testing.T) {
 			op := &flakyOperation{failures: 1000}
 
 			err := hqgoretrier.Retry(
-				t.Context(),
+				context.Background(),
 				op.run,
 				hqgoretrier.WithMaxAttempts(tt.maxAttempts),
 				hqgoretrier.WithBackoff(noWaitBackoff),
@@ -177,7 +178,7 @@ func TestRetry_OptionsLastOneWins(t *testing.T) {
 	op := &flakyOperation{failures: 1000}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithMaxAttempts(2),
@@ -202,7 +203,7 @@ func TestRetry_DefaultMaxAttempts(t *testing.T) {
 	op := &flakyOperation{failures: 1000}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithBackoff(noWaitBackoff),
 	)
@@ -227,7 +228,7 @@ func TestRetry_ReturnsLastError(t *testing.T) {
 	}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op,
 		hqgoretrier.WithMaxAttempts(2),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -246,7 +247,7 @@ func TestRetry_RetryIf(t *testing.T) {
 		op := &flakyOperation{failures: 1000}
 
 		err := hqgoretrier.Retry(
-			t.Context(),
+			context.Background(),
 			op.run,
 			hqgoretrier.WithMaxAttempts(5),
 			hqgoretrier.WithBackoff(noWaitBackoff),
@@ -265,7 +266,7 @@ func TestRetry_RetryIf(t *testing.T) {
 		op := &flakyOperation{failures: 2}
 
 		err := hqgoretrier.Retry(
-			t.Context(),
+			context.Background(),
 			op.run,
 			hqgoretrier.WithMaxAttempts(5),
 			hqgoretrier.WithBackoff(noWaitBackoff),
@@ -284,7 +285,7 @@ func TestRetry_RetryIf(t *testing.T) {
 		op := &flakyOperation{failures: 2}
 
 		err := hqgoretrier.Retry(
-			t.Context(),
+			context.Background(),
 			op.run,
 			hqgoretrier.WithMaxAttempts(5),
 			hqgoretrier.WithBackoff(noWaitBackoff),
@@ -310,7 +311,7 @@ func TestRetry_OnRetryReceivesAttemptErrorAndWait(t *testing.T) {
 	op := &flakyOperation{failures: 2}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithBackoff(perAttempt),
@@ -337,7 +338,7 @@ func TestRetry_OnRetrySkipsFinalAttempt(t *testing.T) {
 	op := &flakyOperation{failures: 1000}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(3),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -358,7 +359,7 @@ func TestRetry_OnRetrySilentWithoutUpcomingRetry(t *testing.T) {
 	op := &flakyOperation{failures: 1000}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -379,7 +380,7 @@ func TestRetry_OnRetryPanicPropagates(t *testing.T) {
 
 	require.Panics(t, func() {
 		_ = hqgoretrier.Retry(
-			t.Context(),
+			context.Background(),
 			op.run,
 			hqgoretrier.WithMaxAttempts(5),
 			hqgoretrier.WithBackoff(noWaitBackoff),
@@ -401,7 +402,7 @@ func TestRetry_ZeroDelayBackoffIsClampedToFloor(t *testing.T) {
 	start := time.Now()
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(3),
 		hqgoretrier.WithBackoff(noWaitBackoff), // computes a zero delay on every attempt
@@ -449,7 +450,7 @@ func TestRetry_BackoffConstructedOnceWithConfiguredBounds(t *testing.T) {
 	op := &flakyOperation{failures: 3}
 
 	err := hqgoretrier.Retry(
-		t.Context(),
+		context.Background(),
 		op.run,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithWaitMin(waitMin),
@@ -467,7 +468,7 @@ func TestRetry_BackoffConstructedOnceWithConfiguredBounds(t *testing.T) {
 func TestRetry_NilBackoffFallsBackToDefault(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 
 	defer cancel()
 
@@ -517,7 +518,7 @@ func TestRetry_WaitBoundsAreNormalized(t *testing.T) {
 			op := &flakyOperation{failures: 1000}
 
 			err := hqgoretrier.Retry(
-				t.Context(),
+				context.Background(),
 				op.run,
 				hqgoretrier.WithMaxAttempts(2),
 				hqgoretrier.WithWaitMin(tt.waitMin),
@@ -535,7 +536,7 @@ func TestRetry_WaitBoundsAreNormalized(t *testing.T) {
 func TestRetry_ContextCanceledBeforeStart(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(t.Context())
+	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	op := &flakyOperation{failures: 2}
@@ -556,7 +557,7 @@ func TestRetry_ContextCanceledBeforeStartWithCause(t *testing.T) {
 
 	cause := errors.New("shutting down")
 
-	ctx, cancel := context.WithCancelCause(t.Context())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	cancel(cause)
 
 	op := &flakyOperation{failures: 2}
@@ -577,7 +578,7 @@ func TestRetry_ContextCanceledDuringWait(t *testing.T) {
 
 	cause := errors.New("canceled during wait")
 
-	ctx, cancel := context.WithCancelCause(t.Context())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
 	waiting := make(chan struct{})
@@ -617,7 +618,7 @@ func TestRetry_ContextTimeout(t *testing.T) {
 
 	op := &flakyOperation{failures: 1000}
 
-	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 
 	defer cancel()
 
@@ -639,7 +640,7 @@ func TestRetry_UnboundedAttemptsStopOnContext(t *testing.T) {
 
 	op := &flakyOperation{failures: 1_000_000}
 
-	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 
 	defer cancel()
 
@@ -675,7 +676,7 @@ func TestRetry_ConcurrentLoops(t *testing.T) {
 			op := &flakyOperation{failures: 2}
 
 			err := hqgoretrier.Retry(
-				t.Context(),
+				context.Background(),
 				op.run,
 				hqgoretrier.WithMaxAttempts(5),
 				hqgoretrier.WithWaitMin(time.Nanosecond),
@@ -705,7 +706,7 @@ func TestRetryWithData_ImmediateSuccess(t *testing.T) {
 	}
 
 	result, err := hqgoretrier.RetryWithData(
-		t.Context(),
+		context.Background(),
 		op,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -732,7 +733,7 @@ func TestRetryWithData_SuccessAfterFailures(t *testing.T) {
 	}
 
 	result, err := hqgoretrier.RetryWithData(
-		t.Context(),
+		context.Background(),
 		op,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -755,7 +756,7 @@ func TestRetryWithData_ReturnsLastResultOnFailure(t *testing.T) {
 	}
 
 	result, err := hqgoretrier.RetryWithData(
-		t.Context(),
+		context.Background(),
 		op,
 		hqgoretrier.WithMaxAttempts(3),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -778,7 +779,7 @@ func TestRetryWithData_RetryIfStopsRetries(t *testing.T) {
 	}
 
 	result, err := hqgoretrier.RetryWithData(
-		t.Context(),
+		context.Background(),
 		op,
 		hqgoretrier.WithMaxAttempts(5),
 		hqgoretrier.WithBackoff(noWaitBackoff),
@@ -795,7 +796,7 @@ func TestRetryWithData_RetryIfStopsRetries(t *testing.T) {
 func TestRetryWithData_ContextCanceledBeforeStart(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(t.Context())
+	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	calls := 0
@@ -823,7 +824,7 @@ func TestRetryWithData_ContextCanceledDuringWait(t *testing.T) {
 
 	cause := errors.New("canceled during wait")
 
-	ctx, cancel := context.WithCancelCause(t.Context())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
 	waiting := make(chan struct{})
@@ -864,7 +865,7 @@ func TestRetryWithData_ContextCanceledDuringWaitReturnsStaleResult(t *testing.T)
 
 	cause := errors.New("canceled during wait")
 
-	ctx, cancel := context.WithCancelCause(t.Context())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
 	waiting := make(chan struct{})
@@ -914,9 +915,9 @@ func BenchmarkRetryWithData(b *testing.B) {
 		}
 	}
 
-	ctx := b.Context()
+	ctx := context.Background()
 
-	for b.Loop() {
+	for range b.N {
 		calls := 0
 
 		operation := func() (int, error) {
@@ -936,4 +937,131 @@ func BenchmarkRetryWithData(b *testing.B) {
 			hqgoretrier.WithBackoff(constantBackoff),
 		)
 	}
+}
+
+// ExampleRetry demonstrates retrying an operation that returns only an error.
+func ExampleRetry() {
+	attempts := 0
+
+	operation := func() error {
+		attempts++
+
+		if attempts < 3 {
+			return errors.New("temporary failure")
+		}
+
+		return nil
+	}
+
+	err := hqgoretrier.Retry(
+		context.Background(),
+		operation,
+		hqgoretrier.WithMaxAttempts(5),
+		hqgoretrier.WithWaitMin(time.Millisecond),
+		hqgoretrier.WithWaitMax(time.Millisecond),
+	)
+
+	fmt.Printf("err: %v\n", err)
+	// Output:
+	// err: <nil>
+}
+
+// ExampleRetryWithData demonstrates retrying an operation that returns a value.
+func ExampleRetryWithData() {
+	attempts := 0
+
+	fetch := func() (string, error) {
+		attempts++
+
+		if attempts < 2 {
+			return "", errors.New("temporary failure")
+		}
+
+		return "payload", nil
+	}
+
+	result, err := hqgoretrier.RetryWithData(
+		context.Background(),
+		fetch,
+		hqgoretrier.WithMaxAttempts(5),
+		hqgoretrier.WithWaitMin(time.Millisecond),
+		hqgoretrier.WithWaitMax(time.Millisecond),
+	)
+	if err != nil {
+		fmt.Println(err)
+
+		return
+	}
+
+	fmt.Println(result)
+	// Output:
+	// payload
+}
+
+// FuzzRetryWithData exercises the retry loop over arbitrary failure counts and
+// attempt limits with pinned nanosecond wait bounds, so runs stay fast: the
+// loop must succeed exactly when failures do not exhaust the attempt budget,
+// and otherwise return the operation error with a zero result.
+func FuzzRetryWithData(f *testing.F) {
+	f.Add(0, 5)
+	f.Add(3, 5)
+	f.Add(10, 1)
+
+	f.Fuzz(func(t *testing.T, failures int, maxAttempts int) {
+		if failures < 0 {
+			failures = -failures
+		}
+
+		failures %= 100
+
+		if maxAttempts < 0 {
+			maxAttempts = -maxAttempts
+		}
+
+		maxAttempts %= 10
+
+		if maxAttempts == 0 {
+			maxAttempts = hqgoretrier.DefaultMaxAttempts
+		}
+
+		calls := 0
+
+		op := func() (int, error) {
+			calls++
+
+			if calls <= failures {
+				return 0, errTestOperation
+			}
+
+			return calls, nil
+		}
+
+		result, err := hqgoretrier.RetryWithData(
+			context.Background(),
+			op,
+			hqgoretrier.WithMaxAttempts(maxAttempts),
+			hqgoretrier.WithWaitMin(time.Nanosecond),
+			hqgoretrier.WithWaitMax(time.Nanosecond),
+		)
+
+		if failures >= maxAttempts {
+			if !errors.Is(err, errTestOperation) {
+				t.Fatalf("Expected the operation error after %d attempts, got %v", maxAttempts, err)
+			}
+
+			if result != 0 {
+				t.Fatalf("Expected a zero result on failure, got %d", result)
+			}
+
+			return
+		}
+
+		if err != nil {
+			t.Fatalf("Expected success with %d failures and %d attempts, got %v", failures, maxAttempts, err)
+		}
+
+		if result != failures+1 {
+			t.Fatalf("Expected the successful attempt's result %d, got %d", failures+1, result)
+		}
+	})
 }

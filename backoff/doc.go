@@ -7,6 +7,7 @@
 // drawn from the [github.com/hueristiq/hq-lib-retrier-go/jitter] package:
 //
 //   - [Exponential] applies no jitter; the delay is fully deterministic.
+//   - [Constant] yields a fixed delay, regardless of the attempt number.
 //   - [ExponentialWithEqualJitter] keeps half the base fixed and randomizes the rest, yielding a
 //     delay in [base/2, base).
 //   - [ExponentialWithFullJitter] randomizes the entire base, yielding a delay in [0, base). This

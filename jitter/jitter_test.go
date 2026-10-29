@@ -310,7 +310,7 @@ var sinkDuration time.Duration
 func BenchmarkEqual(b *testing.B) {
 	b.ReportAllocs()
 
-	for b.Loop() {
+	for range b.N {
 		sinkDuration = Equal(8 * time.Second)
 	}
 }
@@ -318,7 +318,7 @@ func BenchmarkEqual(b *testing.B) {
 func BenchmarkFull(b *testing.B) {
 	b.ReportAllocs()
 
-	for b.Loop() {
+	for range b.N {
 		sinkDuration = Full(8 * time.Second)
 	}
 }
@@ -326,7 +326,7 @@ func BenchmarkFull(b *testing.B) {
 func BenchmarkDecorrelated(b *testing.B) {
 	b.ReportAllocs()
 
-	for b.Loop() {
+	for range b.N {
 		sinkDuration = Decorrelated(time.Second, time.Minute, 4*time.Second)
 	}
 }

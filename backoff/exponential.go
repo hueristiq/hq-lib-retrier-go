@@ -62,6 +62,32 @@ func exponential(minDelay, maxDelay time.Duration, attempt int) (base time.Durat
 	return min(minDelay<<attempt, maxDelay)
 }
 
+// newExponential builds a stateless exponential Backoff: invalid bounds yield the zero backoff,
+// and each call validates the attempt, computes the exponential base, and hands it to transform.
+// The exponential constructors in this package pass their jitter strategy as transform.
+//
+// Parameters:
+//   - minDelay (time.Duration): the base (minimum) delay duration.
+//   - maxDelay (time.Duration): the maximum allowable delay duration.
+//   - transform (func(base time.Duration) (delay time.Duration)): applies the
+//     jitter strategy to the exponential base.
+//
+// Returns:
+//   - backoff (Backoff): a function that computes the delay for a given attempt.
+func newExponential(minDelay, maxDelay time.Duration, transform func(base time.Duration) (delay time.Duration)) (backoff Backoff) {
+	if !validBounds(minDelay, maxDelay) {
+		return zeroBackoff()
+	}
+
+	return func(attempt int) (delay time.Duration) {
+		if attempt < 0 {
+			return 0
+		}
+
+		return transform(exponential(minDelay, maxDelay, attempt))
+	}
+}
+
 // Exponential returns a Backoff function that implements a basic exponential backoff strategy.
 //
 // This strategy calculates the delay by exponentially increasing the base delay (minDelay) based on
@@ -81,6 +107,25 @@ func exponential(minDelay, maxDelay time.Duration, attempt int) (base time.Durat
 //   - backoff (Backoff): a function that computes the exponential backoff delay for a given attempt,
 //     capped at maxDelay.
 func Exponential(minDelay, maxDelay time.Duration) (backoff Backoff) {
+	return newExponential(minDelay, maxDelay, func(base time.Duration) (delay time.Duration) {
+		return base
+	})
+}
+
+// Constant returns a Backoff that always yields minDelay, regardless of the attempt
+// number: a fixed delay between retries.
+//
+// If minDelay or maxDelay is less than or equal to 0 or minDelay exceeds maxDelay, the returned
+// Backoff always yields a zero duration. A negative attempt also yields zero.
+//
+// Parameters:
+//   - minDelay (time.Duration): the fixed delay between attempts.
+//   - maxDelay (time.Duration): the maximum allowable delay duration; bounds
+//     validation only — the returned delay never exceeds minDelay.
+//
+// Returns:
+//   - backoff (Backoff): a function that always yields minDelay.
+func Constant(minDelay, maxDelay time.Duration) (backoff Backoff) {
 	if !validBounds(minDelay, maxDelay) {
 		return zeroBackoff()
 	}
@@ -90,7 +135,7 @@ func Exponential(minDelay, maxDelay time.Duration) (backoff Backoff) {
 			return 0
 		}
 
-		return exponential(minDelay, maxDelay, attempt)
+		return minDelay
 	}
 }
 
@@ -113,17 +158,7 @@ func Exponential(minDelay, maxDelay time.Duration) (backoff Backoff) {
 //   - backoff (Backoff): a function that computes the exponential backoff delay with equal jitter for a
 //     given attempt, never exceeding maxDelay.
 func ExponentialWithEqualJitter(minDelay, maxDelay time.Duration) (backoff Backoff) {
-	if !validBounds(minDelay, maxDelay) {
-		return zeroBackoff()
-	}
-
-	return func(attempt int) (delay time.Duration) {
-		if attempt < 0 {
-			return 0
-		}
-
-		return hqgoretrierjitter.Equal(exponential(minDelay, maxDelay, attempt))
-	}
+	return newExponential(minDelay, maxDelay, hqgoretrierjitter.Equal)
 }
 
 // ExponentialWithFullJitter returns a Backoff function that implements exponential backoff with
@@ -146,17 +181,7 @@ func ExponentialWithEqualJitter(minDelay, maxDelay time.Duration) (backoff Backo
 //   - backoff (Backoff): a function that computes the exponential backoff delay with full jitter for a
 //     given attempt, never exceeding maxDelay.
 func ExponentialWithFullJitter(minDelay, maxDelay time.Duration) (backoff Backoff) {
-	if !validBounds(minDelay, maxDelay) {
-		return zeroBackoff()
-	}
-
-	return func(attempt int) (delay time.Duration) {
-		if attempt < 0 {
-			return 0
-		}
-
-		return hqgoretrierjitter.Full(exponential(minDelay, maxDelay, attempt))
-	}
+	return newExponential(minDelay, maxDelay, hqgoretrierjitter.Full)
 }
 
 // ExponentialWithDecorrelatedJitter returns a Backoff function that implements exponential backoff

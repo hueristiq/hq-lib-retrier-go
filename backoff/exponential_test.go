@@ -179,6 +179,7 @@ func TestInvalidBoundsAlwaysReturnZero(t *testing.T) {
 		new  func(minDelay, maxDelay time.Duration) Backoff
 	}{
 		{"exponential", Exponential},
+		{"constant", Constant},
 		{"equal jitter", ExponentialWithEqualJitter},
 		{"full jitter", ExponentialWithFullJitter},
 		{"decorrelated jitter", ExponentialWithDecorrelatedJitter},
@@ -568,12 +569,63 @@ func TestExponentialWithDecorrelatedJitterConcurrentUse(t *testing.T) {
 
 var sinkDuration time.Duration
 
+func TestConstantBackoff(t *testing.T) {
+	t.Parallel()
+
+	t.Run("fixed delay for every attempt", func(t *testing.T) {
+		t.Parallel()
+
+		b := Constant(100*time.Millisecond, time.Second)
+
+		for attempt := 1; attempt <= 10; attempt++ {
+			assert.Equal(t, 100*time.Millisecond, b(attempt), "Expected a fixed delay for attempt %d", attempt)
+		}
+	})
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name               string
+			minDelay, maxDelay time.Duration
+			attempt            int
+			expected           time.Duration
+		}{
+			{"negative minDelay", -time.Millisecond, time.Second, 1, 0},
+			{"negative maxDelay", time.Millisecond, -time.Second, 1, 0},
+			{"minDelay > maxDelay", 2 * time.Second, time.Second, 1, 0},
+			{"negative attempt", time.Millisecond, time.Second, -1, 0},
+			{"zero attempt", time.Millisecond, time.Second, 0, time.Millisecond},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				b := Constant(tt.minDelay, tt.maxDelay)
+
+				assert.Equal(t, tt.expected, b(tt.attempt))
+			})
+		}
+	})
+}
+
+func BenchmarkConstant(b *testing.B) {
+	b.ReportAllocs()
+
+	bo := Constant(time.Millisecond, 30*time.Second)
+
+	for range b.N {
+		sinkDuration = bo(5)
+	}
+}
+
 func BenchmarkExponential(b *testing.B) {
 	b.ReportAllocs()
 
 	bo := Exponential(time.Millisecond, 30*time.Second)
 
-	for b.Loop() {
+	for range b.N {
 		sinkDuration = bo(5)
 	}
 }
@@ -583,7 +635,7 @@ func BenchmarkExponentialWithDecorrelatedJitter(b *testing.B) {
 
 	bo := ExponentialWithDecorrelatedJitter(time.Millisecond, 30*time.Second)
 
-	for b.Loop() {
+	for range b.N {
 		sinkDuration = bo(5)
 	}
 }
