@@ -12,6 +12,7 @@
 	- [Retry](#retry)
 	- [Retry With Data](#retry-with-data)
 	- [Non-Retryable Errors](#non-retryable-errors)
+	- [Custom Backoff and Jitter](#custom-backoff-and-jitter)
 - [Contributing](#contributing)
 - [Licensing](#licensing)
 
@@ -31,10 +32,14 @@ Requires Go 1.23 or later.
 
 ## Usage
 
-The examples import the package under the `hqgoretrier` alias:
+The examples import the package under the `hqgoretrier` alias; the subpackages use `hqgoretrierbackoff` and `hqgoretrierjitter`:
 
 ```go
-import hqgoretrier "github.com/hueristiq/hq-lib-retrier-go"
+import (
+	hqgoretrier "github.com/hueristiq/hq-lib-retrier-go"
+	hqgoretrierbackoff "github.com/hueristiq/hq-lib-retrier-go/backoff"
+	hqgoretrierjitter "github.com/hueristiq/hq-lib-retrier-go/jitter"
+)
 ```
 
 ### Retry
@@ -116,6 +121,26 @@ err := hqgoretrier.Retry(ctx, operation,
 		return !errors.Is(err, sql.ErrNoRows) // missing rows are not worth retrying
 	}),
 )
+```
+
+### Custom Backoff and Jitter
+
+`WithBackoff` takes a strategy constructor; the `backoff` package provides `Constant`, `Exponential`, `ExponentialWithEqualJitter`, `ExponentialWithFullJitter`, and `ExponentialWithDecorrelatedJitter`. The `jitter` package exposes the raw transforms — `Equal`, `Full`, and `Decorrelated` — for composing custom strategies:
+
+```go
+strategy := func(minDelay, maxDelay time.Duration) hqgoretrierbackoff.Backoff {
+	var previous time.Duration
+
+	return func(_ int) time.Duration {
+		delay := hqgoretrierjitter.Decorrelated(minDelay, maxDelay, previous)
+
+		previous = delay
+
+		return delay
+	}
+}
+
+err := hqgoretrier.Retry(ctx, operation, hqgoretrier.WithBackoff(strategy))
 ```
 
 ## Contributing
