@@ -43,12 +43,8 @@ jobs:
                     go-version-file: go.mod
                     cache: false
             -
-                name: Check doc.go
-                run: make go-doc-check
-                working-directory: .
-            -
-                name: Check test layout
-                run: make go-test-check
+                name: Check formatting
+                run: make go-fmt-check
                 working-directory: .
             -
                 name: golangci-lint

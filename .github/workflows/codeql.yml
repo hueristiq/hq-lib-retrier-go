@@ -1,4 +1,4 @@
-name: 🚨 Analyze Code (CodeQL)
+name: 🛡️ Vulnerability Scan (CodeQL)
 
 on:
     push:
@@ -25,7 +25,7 @@ on:
 
 jobs:
     analyze:
-        name: Analyze Code (CodeQL)
+        name: Vulnerability Scan (CodeQL)
         strategy:
             fail-fast: false
             matrix:
