@@ -47,6 +47,10 @@ jobs:
                 run: make go-doc-check
                 working-directory: .
             -
+                name: Check test layout
+                run: make go-test-check
+                working-directory: .
+            -
                 name: golangci-lint
                 uses: golangci/golangci-lint-action@v9
                 with:

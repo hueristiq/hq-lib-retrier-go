@@ -94,7 +94,7 @@ lefthook-initialize:
 	fi
 	@$(call log_success,Initializing lefthook...done!)
 
-.PHONY: go-mod-clean go-mod-tidy go-mod-update go-doc-check go-fmt-check go-fmt go-lint go-test
+.PHONY: go-mod-clean go-mod-tidy go-mod-update go-doc-check go-test-check go-fmt-check go-fmt go-lint go-test
 
 go-mod-clean:
 	@$(call log_header,Cleaning Go module cache...)
@@ -135,6 +135,11 @@ go-doc-check:
 	done; \
 	if [ $$fail -ne 0 ]; then $(call log_error,package doc.go check failed!); exit 1; fi
 	@$(call log_success,Checking package doc.go files...done!)
+
+go-test-check:
+	@$$(call log_header,Checking test layout...)
+	@./hack/check-test-layout.sh || ( $$(call log_error,Test layout check failed!) && exit 1 )
+	@$$(call log_success,Checking test layout...done!)
 
 go-fmt-check: install-golangci-lint
 	@$(call log_header,Checking Go formatting...)

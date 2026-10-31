@@ -32,6 +32,8 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest, windows-latest, macos-latest]
+                include:
+                    - os: ubuntu-24.04-arm
         runs-on: ${{ matrix.os }}
         steps:
             -
