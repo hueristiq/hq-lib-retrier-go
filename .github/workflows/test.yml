@@ -56,6 +56,10 @@ jobs:
                 name: Go test
                 run: go test -v -race ./...
                 working-directory: .
+            -
+                name: Build examples
+                run: go build ./examples/...
+                working-directory: .
     govulncheck:
         name: Vulnerability Scan
         runs-on: ubuntu-latest

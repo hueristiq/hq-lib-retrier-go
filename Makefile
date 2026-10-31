@@ -130,6 +130,7 @@ go-lint:
 go-test:
 	@$(call log_header, Running Go tests...)
 	@go test -v -race ./... || ( $(call log_error, Failed Running Go tests!) && exit 1 )
+	@go build ./examples/... || ( $(call log_error, Failed Building Go examples!) && exit 1 )
 	@$(call log_success, Running Go tests...done!)
 
 .PHONY: help

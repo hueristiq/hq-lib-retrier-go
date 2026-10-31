@@ -1,3 +1,4 @@
+//nolint:testpackage // tests exercise unexported behavior.
 package jitter
 
 import (
