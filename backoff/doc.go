@@ -1,4 +1,4 @@
-// Package backoff provides strategies for computing the delay between retry attempts.
+// Package backoff computes the delay between retry attempts.
 //
 // A strategy is any function matching the [Backoff] type. Constructors take the delay bounds and
 // return a ready-to-use Backoff bound to them, so each call needs only the attempt number. The
@@ -24,4 +24,8 @@
 // All strategies guard against integer overflow and produce a zero duration for invalid input —
 // a constructor called with non-positive bounds or a minimum above the maximum returns a Backoff
 // that always yields zero, and a negative attempt yields zero.
+//
+// # Entry points
+//
+// [Constant], [Exponential], [ExponentialWithDecorrelatedJitter], [ExponentialWithEqualJitter], [ExponentialWithFullJitter], [Backoff]
 package backoff

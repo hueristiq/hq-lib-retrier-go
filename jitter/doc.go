@@ -1,4 +1,4 @@
-// Package jitter provides strategies for adding randomness to backoff delays.
+// Package jitter adds randomness to backoff delays.
 //
 // Jitter spreads retry attempts across time so that clients which failed together do not retry in
 // lockstep — the "thundering herd" problem that can keep a recovering service overwhelmed. Each
@@ -14,4 +14,8 @@
 // safe for concurrent use, since their randomness comes from the goroutine-safe top-level
 // functions of math/rand/v2. They back the strategies in
 // [github.com/hueristiq/hq-lib-retrier-go/backoff] but are exported for building custom ones.
+//
+// # Entry points
+//
+// [Decorrelated], [Equal], [Full]
 package jitter

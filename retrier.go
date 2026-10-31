@@ -135,7 +135,7 @@ const (
 	//
 	// It applies when WithWaitMin is not supplied, and when a supplied value less than or
 	// equal to 0 is normalized back to the default.
-	DefaultWaitMin = 1 * time.Second
+	DefaultWaitMin = 1 * time.Second //nolint:revive // Min names the lower backoff bound.
 
 	// DefaultWaitMax is the default maximum delay between retry attempts, capping the backoff
 	// duration.

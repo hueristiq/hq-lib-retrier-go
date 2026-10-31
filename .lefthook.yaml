@@ -1,5 +1,7 @@
 pre-commit:
     commands:
+        go-doc-check:
+            run: make go-doc-check
         go-fmt-check:
             run: make go-fmt-check
         go-lint:
