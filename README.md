@@ -4,89 +4,101 @@
 
 `hq-lib-retrier-go` is a [Go](https://golang.org/) package for retrying operations that may fail transiently.
 
-## Table of Contents
+## Resources
 
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
 	- [Retry](#retry)
-	- [Retry With Data](#retry-with-data)
-	- [Non-Retryable Errors](#non-retryable-errors)
-	- [Custom Backoff and Jitter](#custom-backoff-and-jitter)
+	- [Retry with data](#retry-with-data)
+	- [Non-retryable errors](#non-retryable-errors)
+	- [Custom backoff and jitter](#custom-backoff-and-jitter)
 - [Contributing](#contributing)
 - [Licensing](#licensing)
 
 ## Features
 
-- **Configurable Retry Policy:** Max attempts, min/max delays, and backoff strategy.
-- **Result-Carrying Operations:** `RetryWithData` retries operations that return a value.
-- **Context Support:** Cancellation and deadlines are checked before and between attempts and during waits.
+- **Configurable policy:** max attempts, min/max delays, and backoff strategy.
+- **Result-carrying operations:** `RetryWithData` retries operations that return a value.
+- **Context support:** cancellation and deadlines are checked before and between attempts and during waits.
+- **Pluggable backoff and jitter:** `WithBackoff` accepts constant, exponential, equal-jitter, full-jitter, or decorrelated strategies.
+- **Retry hooks:** `WithRetryOn` stops on non-retryable errors, and `WithOnRetry` observes each attempt.
 
 ## Installation
+
+To install `hq-lib-retrier-go`, run the following command in your Go project:
 
 ```bash
 go get github.com/hueristiq/hq-lib-retrier-go@latest
 ```
 
-Requires Go 1.23 or later.
+Requires Go 1.22.0 or later.
 
 ## Usage
 
-The examples import the package under the `hqgoretrier` alias; the subpackages use `hqgoretrierbackoff` and `hqgoretrierjitter`:
-
-```go
-import (
-	hqgoretrier "github.com/hueristiq/hq-lib-retrier-go"
-	hqgoretrierbackoff "github.com/hueristiq/hq-lib-retrier-go/backoff"
-	hqgoretrierjitter "github.com/hueristiq/hq-lib-retrier-go/jitter"
-)
-```
+The examples import the package under the `hqgoretrier` alias. Subpackages use `hqgoretrierbackoff` and `hqgoretrierjitter`.
 
 ### Retry
 
-Use `Retry` for operations that return only an error:
+Use `Retry` for operations that return only an error. Use `RetryWithData` for operations that also return a value.
 
 ```go
-attempts := 0
+package main
 
-operation := func() error {
-	attempts++
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
 
-	if attempts < 3 {
-		return fmt.Errorf("temporary failure (attempt %d)", attempts)
+	hqgoretrier "github.com/hueristiq/hq-lib-retrier-go"
+)
+
+func main() {
+	attempts := 0
+
+	operation := func() error {
+		attempts++
+
+		if attempts < 3 {
+			return fmt.Errorf("temporary failure (attempt %d)", attempts)
+		}
+
+		return nil
 	}
 
-	return nil
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := hqgoretrier.Retry(ctx, operation,
+		hqgoretrier.WithMaxAttempts(5),
+		hqgoretrier.WithWaitMin(100*time.Millisecond),
+		hqgoretrier.WithWaitMax(2*time.Second),
+		hqgoretrier.WithOnRetry(func(event hqgoretrier.RetryEvent) {
+			fmt.Printf("attempt %d failed: %v; next attempt in %s\n",
+				event.Attempt, event.Err, event.Wait)
+		}),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := hqgoretrier.RetryWithData(ctx, func() (string, error) {
+		return "payload", nil
+	}, hqgoretrier.WithMaxAttempts(3))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(result)
 }
-
-ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-defer cancel()
-
-err := hqgoretrier.Retry(ctx, operation,
-	hqgoretrier.WithMaxAttempts(5),
-	hqgoretrier.WithWaitMin(100*time.Millisecond),
-	hqgoretrier.WithWaitMax(2*time.Second),
-	hqgoretrier.WithOnRetry(func(event hqgoretrier.RetryEvent) {
-		fmt.Printf("Attempt %d failed: %v. Next attempt in %v.\n", event.Attempt, event.Err, event.Wait)
-	}),
-)
-if err != nil {
-	fmt.Printf("Operation failed after retries: %v\n", err)
-
-	return
-}
-
-fmt.Println("Operation succeeded!")
 ```
 
-### Retry With Data
+### Retry with data
 
-Use `RetryWithData` for operations that return both a result and an error:
+`RetryWithData` returns the last value alongside the error. On failure, treat the value as invalid even when the operation produced a partial result.
 
 ```go
-attempts := 0
-
 fetchData := func() (string, error) {
 	attempts++
 
@@ -103,29 +115,27 @@ result, err := hqgoretrier.RetryWithData(ctx, fetchData,
 	hqgoretrier.WithWaitMax(3*time.Second),
 )
 if err != nil {
-	fmt.Printf("Failed to fetch data after retries: %v\n", err)
-
-	return
+	log.Fatal(err)
 }
 
-fmt.Printf("Data fetched successfully: %s\n", result)
+fmt.Printf("data fetched: %s\n", result)
 ```
 
-### Non-Retryable Errors
+### Non-retryable errors
 
-Not every failure deserves another attempt. `WithRetryOn(fn)` classifies errors after each failed attempt; when it returns `false`, the retry loop stops immediately and returns the offending error instead of scheduling the next one:
+Not every failure deserves another attempt. `WithRetryOn(fn)` classifies errors after each failed attempt. When it returns `false`, the retry loop stops and returns the offending error.
 
 ```go
 err := hqgoretrier.Retry(ctx, operation,
 	hqgoretrier.WithRetryOn(func(err error) bool {
-		return !errors.Is(err, sql.ErrNoRows) // missing rows are not worth retrying
+		return !errors.Is(err, sql.ErrNoRows)
 	}),
 )
 ```
 
-### Custom Backoff and Jitter
+### Custom backoff and jitter
 
-`WithBackoff` takes a strategy constructor; the `backoff` package provides `Constant`, `Exponential`, `ExponentialWithEqualJitter`, `ExponentialWithFullJitter`, and `ExponentialWithDecorrelatedJitter`. The `jitter` package exposes the raw transforms — `Equal`, `Full`, and `Decorrelated` — for composing custom strategies:
+`WithBackoff` takes a strategy constructor. The `backoff` package provides `Constant`, `Exponential`, `ExponentialWithEqualJitter`, `ExponentialWithFullJitter`, and `ExponentialWithDecorrelatedJitter`. The `jitter` package exposes the raw transforms `Equal`, `Full`, and `Decorrelated` for composing custom strategies.
 
 ```go
 strategy := func(minDelay, maxDelay time.Duration) hqgoretrierbackoff.Backoff {
@@ -147,7 +157,7 @@ err := hqgoretrier.Retry(ctx, operation, hqgoretrier.WithBackoff(strategy))
 
 Contributions are welcome and encouraged! Feel free to submit [Pull Requests](https://github.com/hueristiq/hq-lib-retrier-go/pulls) or report [Issues](https://github.com/hueristiq/hq-lib-retrier-go/issues).
 
-A big thank you to all the [contributors](https://github.com/hueristiq/hq-lib-retrier-go/graphs/contributors) for their ongoing support!
+A big thank you to all the [contributors](https://github.com/hueristiq/hq-lib-retrier-go/graphs/contributors) for your ongoing support!
 
 ![contributors](https://contrib.rocks/image?repo=hueristiq/hq-lib-retrier-go&max=500)
 

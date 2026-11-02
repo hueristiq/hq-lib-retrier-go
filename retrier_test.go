@@ -429,7 +429,7 @@ func TestRetry_BackoffConstructedOnceWithConfiguredBounds(t *testing.T) {
 
 	var (
 		constructs     int
-		gotMin, gotMax time.Duration //nolint:revive // Min/Max name the backoff bounds.
+		gotMin, gotMax time.Duration
 		attempts       []int
 	)
 
@@ -505,7 +505,7 @@ func TestRetry_WaitBoundsAreNormalized(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			var gotMin, gotMax time.Duration //nolint:revive // Min/Max name the backoff bounds.
+			var gotMin, gotMax time.Duration
 
 			factory := func(minDelay, maxDelay time.Duration) hqgoretrierbackoff.Backoff {
 				gotMin, gotMax = minDelay, maxDelay
