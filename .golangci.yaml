@@ -132,6 +132,8 @@ linters:
                 - whyNoLint
         gocyclo:
             min-complexity: 10
+        testpackage:
+            skip-regexp: '(_internal|_bench|_fuzz)_test\.go$'
         whitespace:
             multi-if: true
             multi-func: true
