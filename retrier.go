@@ -78,14 +78,14 @@ type OptionFunc func(opts *Options)
 // It encapsulates a task that returns an error to indicate success (nil) or failure (non-nil).
 // This type is used with the Retry function for operations that do not produce a result.
 //
-// The operation receives no context; capture the context passed to Retry if an attempt needs
-// cancellation or a deadline. It may be called multiple times, so it should be prepared to run
-// again after a failure. A panicking operation is not recovered — the panic propagates to the
-// caller of Retry.
+// Each attempt receives the retry context, so the operation can honor
+// cancellation and deadlines. It may be called multiple times, so it should be
+// prepared to run again after a failure. A panicking operation is not
+// recovered — the panic propagates to the caller of Retry.
 //
 // Returns:
 //   - err (error): the error from the operation, or nil if the operation succeeded.
-type Operation func() (err error)
+type Operation func(ctx context.Context) (err error)
 
 // withEmptyData wraps an Operation to convert it into an OperationWithData that returns an
 // empty struct as its data.
@@ -97,8 +97,8 @@ type Operation func() (err error)
 //   - operationWithData (OperationWithData[struct{}]): a function that executes the original
 //     Operation and returns an empty struct alongside the operation's error.
 func (o Operation) withEmptyData() (operationWithData OperationWithData[struct{}]) {
-	operationWithData = func() (struct{}, error) {
-		return struct{}{}, o()
+	operationWithData = func(ctx context.Context) (struct{}, error) {
+		return struct{}{}, o(ctx)
 	}
 
 	return
@@ -121,7 +121,7 @@ func (o Operation) withEmptyData() (operationWithData OperationWithData[struct{}
 // Returns:
 //   - data (T): the result of the operation if successful.
 //   - err (error): the error from the operation, or nil if the operation succeeded.
-type OperationWithData[T any] func() (data T, err error)
+type OperationWithData[T any] func(ctx context.Context) (data T, err error)
 
 const (
 	// DefaultMaxAttempts is the default maximum number of attempts, counting the initial call.
@@ -415,7 +415,7 @@ func retry[T any](ctx context.Context, operation OperationWithData[T], name stri
 			return result, fmt.Errorf("%s: %w", name, context.Cause(ctx))
 		}
 
-		result, err = operation()
+		result, err = operation(ctx)
 		if err == nil {
 			return result, nil
 		}

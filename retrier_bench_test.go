@@ -28,7 +28,7 @@ func BenchmarkRetryWithData(b *testing.B) {
 	for range b.N {
 		calls := 0
 
-		operation := func() (int, error) {
+		operation := func(context.Context) (int, error) {
 			calls++
 
 			if calls <= 2 {

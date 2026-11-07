@@ -13,8 +13,8 @@
 // caller. Retry is a thin wrapper over RetryWithData, so both share identical retry, backoff, and
 // cancellation behavior.
 //
-// Operations receive no context of their own; capture the context passed to the entry point if an
-// attempt needs cancellation or a deadline. An operation may run several times, so it must be
+// Operations receive the retry context for each attempt, so they can honor
+// cancellation and deadlines. An operation may run several times, so it must be
 // prepared to execute again after a failure.
 //
 // # Configuration
@@ -53,13 +53,15 @@
 //
 // # Context
 //
-// Every attempt and every wait observes the supplied context. When the context is canceled or its
+// Every attempt and every wait observes the supplied context. The operation
+// receives that context on every attempt. When the context is canceled or its
 // deadline passes, the active call returns [context.Cause] for that context
-// wrapped with the entry point's name and abandons any
-// further attempts. The result RetryWithData returns in that case is whatever the most recent
-// attempt produced — the zero value of the result type if no attempt ran — so it must not be
-// treated as successful; check the error first. On a clean context, the result of the final
-// attempt — its value for RetryWithData, plus its error — is returned.
+// wrapped with the entry point's name and abandons any further attempts. The
+// result RetryWithData returns in that case is whatever the most recent attempt
+// produced — the zero value of the result type if no attempt ran — so it must
+// not be treated as successful; check the error first. On a clean context, the
+// result of the final attempt — its value for RetryWithData, plus its error — is
+// returned.
 //
 // # Concurrency
 //

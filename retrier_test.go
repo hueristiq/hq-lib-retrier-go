@@ -27,7 +27,7 @@ type flakyOperation struct {
 	calls    int
 }
 
-func (o *flakyOperation) run() error {
+func (o *flakyOperation) run(context.Context) error {
 	o.calls++
 
 	if o.calls <= o.failures {
@@ -217,7 +217,7 @@ func TestRetry_ReturnsLastError(t *testing.T) {
 
 	calls := 0
 
-	op := func() error {
+	op := func(context.Context) error {
 		calls++
 
 		if calls == 1 {
@@ -593,7 +593,7 @@ func TestRetry_ContextCanceledDuringWait(t *testing.T) {
 		}
 	}
 
-	op := func() error {
+	op := func(context.Context) error {
 		return errTestOperation
 	}
 
@@ -699,7 +699,7 @@ func TestRetryWithData_ImmediateSuccess(t *testing.T) {
 
 	calls := 0
 
-	op := func() (string, error) {
+	op := func(context.Context) (string, error) {
 		calls++
 
 		return "ok", nil
@@ -722,7 +722,7 @@ func TestRetryWithData_SuccessAfterFailures(t *testing.T) {
 
 	calls := 0
 
-	op := func() (int, error) {
+	op := func(context.Context) (int, error) {
 		calls++
 
 		if calls <= 2 {
@@ -749,7 +749,7 @@ func TestRetryWithData_ReturnsLastResultOnFailure(t *testing.T) {
 
 	calls := 0
 
-	op := func() (int, error) {
+	op := func(context.Context) (int, error) {
 		calls++
 
 		return calls, errTestOperation
@@ -772,7 +772,7 @@ func TestRetryWithData_RetryIfStopsRetries(t *testing.T) {
 
 	calls := 0
 
-	op := func() (int, error) {
+	op := func(context.Context) (int, error) {
 		calls++
 
 		return calls, errTestOperation
@@ -801,7 +801,7 @@ func TestRetryWithData_ContextCanceledBeforeStart(t *testing.T) {
 
 	calls := 0
 
-	op := func() (int, error) {
+	op := func(context.Context) (int, error) {
 		calls++
 
 		return 99, errTestOperation
@@ -839,7 +839,7 @@ func TestRetryWithData_ContextCanceledDuringWait(t *testing.T) {
 		}
 	}
 
-	op := func() (int, error) {
+	op := func(context.Context) (int, error) {
 		return 0, errTestOperation
 	}
 
@@ -880,7 +880,7 @@ func TestRetryWithData_ContextCanceledDuringWaitReturnsStaleResult(t *testing.T)
 		}
 	}
 
-	op := func() (int, error) {
+	op := func(context.Context) (int, error) {
 		return 7, errTestOperation
 	}
 
@@ -905,7 +905,7 @@ func TestRetryWithData_ContextCanceledDuringWaitReturnsStaleResult(t *testing.T)
 func ExampleRetry() {
 	attempts := 0
 
-	operation := func() error {
+	operation := func(context.Context) error {
 		attempts++
 
 		if attempts < 3 {
@@ -932,7 +932,7 @@ func ExampleRetry() {
 func ExampleRetryWithData() {
 	attempts := 0
 
-	fetch := func() (string, error) {
+	fetch := func(context.Context) (string, error) {
 		attempts++
 
 		if attempts < 2 {
@@ -988,7 +988,7 @@ func FuzzRetryWithData(f *testing.F) {
 
 		calls := 0
 
-		op := func() (int, error) {
+		op := func(context.Context) (int, error) {
 			calls++
 
 			if calls <= failures {

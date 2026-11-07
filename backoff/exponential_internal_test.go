@@ -567,8 +567,6 @@ func TestExponentialWithDecorrelatedJitterConcurrentUse(t *testing.T) {
 	assert.Zero(t, failures.Load(), "Expected every concurrent draw to stay within bounds")
 }
 
-var sinkDuration time.Duration
-
 func TestConstantBackoff(t *testing.T) {
 	t.Parallel()
 
@@ -608,34 +606,4 @@ func TestConstantBackoff(t *testing.T) {
 			})
 		}
 	})
-}
-
-func BenchmarkConstant(b *testing.B) {
-	b.ReportAllocs()
-
-	bo := Constant(time.Millisecond, 30*time.Second)
-
-	for range b.N {
-		sinkDuration = bo(5)
-	}
-}
-
-func BenchmarkExponential(b *testing.B) {
-	b.ReportAllocs()
-
-	bo := Exponential(time.Millisecond, 30*time.Second)
-
-	for range b.N {
-		sinkDuration = bo(5)
-	}
-}
-
-func BenchmarkExponentialWithDecorrelatedJitter(b *testing.B) {
-	b.ReportAllocs()
-
-	bo := ExponentialWithDecorrelatedJitter(time.Millisecond, 30*time.Second)
-
-	for range b.N {
-		sinkDuration = bo(5)
-	}
 }

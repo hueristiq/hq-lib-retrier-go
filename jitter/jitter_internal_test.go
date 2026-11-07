@@ -304,29 +304,3 @@ func TestJitterConcurrentUse(t *testing.T) {
 
 	assert.Zero(t, failures.Load(), "Expected every concurrent jitter draw to stay within its documented range")
 }
-
-var sinkDuration time.Duration
-
-func BenchmarkEqual(b *testing.B) {
-	b.ReportAllocs()
-
-	for range b.N {
-		sinkDuration = Equal(8 * time.Second)
-	}
-}
-
-func BenchmarkFull(b *testing.B) {
-	b.ReportAllocs()
-
-	for range b.N {
-		sinkDuration = Full(8 * time.Second)
-	}
-}
-
-func BenchmarkDecorrelated(b *testing.B) {
-	b.ReportAllocs()
-
-	for range b.N {
-		sinkDuration = Decorrelated(time.Second, time.Minute, 4*time.Second)
-	}
-}
